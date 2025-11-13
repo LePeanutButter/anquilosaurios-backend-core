@@ -2,7 +2,7 @@
 
 namespace aquilosaurios_backend_core.Shared
 {
-    #region Enums
+    #region Achievements
 
     /// <summary>
     /// Represents various achievement types a player can earn.
@@ -34,6 +34,10 @@ namespace aquilosaurios_backend_core.Shared
         FLAWLESS_VICTORY = 8
     }
 
+    #endregion
+
+    #region Subscriptions
+
     /// <summary>
     /// Available subscription plans for the user.
     /// </summary>
@@ -45,6 +49,10 @@ namespace aquilosaurios_backend_core.Shared
         [Description("Yearly ad-free subscription")]
         AD_FREE_YEARLY = 2
     }
+
+    #endregion
+
+    #region Auditing
 
     /// <summary>
     /// Represents actions logged in the audit system.
@@ -79,6 +87,10 @@ namespace aquilosaurios_backend_core.Shared
         SYSTEM_EVENT = 9
     }
 
+    #endregion
+
+    #region Purchases
+
     /// <summary>
     /// Types of purchases a user can make.
     /// </summary>
@@ -91,32 +103,6 @@ namespace aquilosaurios_backend_core.Shared
         SUBSCRIPTION = 2
     }
 
-    /// <summary>
-    /// Represents the severity level of a log entry.
-    /// </summary>
-    public enum LogLevel
-    {
-        [Description("Informational message")]
-        INFO = 1,
-
-        [Description("Warning message")]
-        WARNING = 2,
-
-        [Description("Error message")]
-        ERROR =3
-    }
-
-    /// <summary>
-    /// Names of payment providers.
-    /// </summary>
-    public enum ProviderName
-    {
-        [Description("Stripe payment provider")]
-        STRIPE = 1,
-
-        [Description("PayPal payment provider")]
-        PAYPAL = 2
-    }
 
     /// <summary>
     /// Status of a purchase transaction.
@@ -142,6 +128,45 @@ namespace aquilosaurios_backend_core.Shared
         DISPUTED = 6
     }
 
+    #endregion
+
+    #region Logging
+
+    /// <summary>
+    /// Represents the severity level of a log entry.
+    /// </summary>
+    public enum LogLevel
+    {
+        [Description("Informational message")]
+        INFO = 1,
+
+        [Description("Warning message")]
+        WARNING = 2,
+
+        [Description("Error message")]
+        ERROR =3
+    }
+
+    #endregion
+
+    #region Payments
+
+    /// <summary>
+    /// Names of payment providers.
+    /// </summary>
+    public enum ProviderName
+    {
+        [Description("Stripe payment provider")]
+        STRIPE = 1,
+
+        [Description("PayPal payment provider")]
+        PAYPAL = 2
+    }
+
+    #endregion
+
+    #region Cosmetics
+
     /// <summary>
     /// Catalog of cosmetic items available in the game.
     /// To be defined in future.
@@ -149,6 +174,25 @@ namespace aquilosaurios_backend_core.Shared
     public enum CosmeticCatalog
     {
         // Placeholder for future cosmetic items
+    }
+
+    #endregion
+
+    #region Authentication
+
+    /// <summary>
+    /// Represents authentication providers available for user login.
+    /// </summary>
+    public enum AuthProvider
+    {
+        [Description("Local authentication provider (email and password)")]
+        LOCAL = 1,
+
+        [Description("Google authentication provider")]
+        GOOGLE = 2,
+
+        [Description("Facebook authentication provider")]
+        FACEBOOK = 3
     }
 
     #endregion

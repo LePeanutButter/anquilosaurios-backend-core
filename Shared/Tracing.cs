@@ -22,7 +22,7 @@ namespace aquilosaurios_backend_core.Shared
         /// <summary>
         /// The timestamp when the log entry was created.
         /// </summary>
-        /// [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime Timestamp { get; init; } = DateTime.Now;
 
         /// <summary>
