@@ -1,0 +1,132 @@
+# ===========================================
+# GitHub Actions Workflow: CI Build & Deploy
+# Environment: Production
+# Description:
+#   - Restores, builds, and tests the .NET backend
+#   - Publishes and deploys to Azure Web App
+#   - Runs on every push or pull request to 'main'
+# ===========================================
+
+name: CI Build & Deploy (.NET Backend - Production)
+
+# -------------------------------------------
+# Trigger: Run workflow on push or PR to 'main' branch
+# -------------------------------------------
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+# -------------------------------------------
+# Jobs Definition
+# -------------------------------------------
+jobs:
+  # =========================================
+  # Job: Build & Test Stage
+  # Purpose: Restore dependencies, build, and test .NET project
+  # =========================================
+  build_and_test:
+    name: Build & Test (.NET)
+    runs-on: windows-latest
+    env:
+      DOTNET_VERSION: '8.0.x'
+      BUILD_CONFIGURATION: 'Release'
+
+    steps:
+      # Step 1: Checkout source code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Setup .NET environment
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Step 3: Cache NuGet packages for faster builds
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}
+
+      # Step 4: Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # Step 5: Build all projects in Release mode
+      - name: Build solution
+        run: dotnet build --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+      # Step 6: Run unit tests and collect results
+      - name: Run unit tests
+        run: dotnet test --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --logger trx
+        continue-on-error: true
+
+      # Step 7: Publish test results (if available)
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/*.trx'
+
+      # Step 8: Publish compiled app (self-contained package)
+      - name: Publish application
+        run: dotnet publish -c ${{ env.BUILD_CONFIGURATION }} -o '${{ github.workspace }}/publish'
+
+      # Step 9: Upload build artifact for deploy stage
+      - name: Upload published artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-app
+          path: ${{ github.workspace }}/publish
+
+  # =========================================
+  # Job: Deploy Stage
+  # Purpose: Deploy published app to Azure Web App
+  # Depends on: build_and_test
+  # =========================================
+  deploy:
+    if: github.event_name == 'push'
+    name: Deploy to Azure Web App (.NET Backend)
+    needs: build_and_test
+    runs-on: windows-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      # Step 1: Download published artifact from build stage
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dotnet-app
+          path: .
+      
+      # Step 2: Login to Azure using federated credentials
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_930989A613B14ACAA4B82F5AB8812BAB }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_30ADB85F1E4E4D10AA037C2CCCC1F5DB }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B9FC2DC3E4414679811EB845CDC0322F }}
+
+      # Step 3: Deploy the backend to Azure App Service
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'anquilosaurios-production-backend'
+          slot-name: 'Production'
+          package: .
+          
+      # Step 4: Logout from Azure session
+      - name: Logout from Azure
+        run: az logout
