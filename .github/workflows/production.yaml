@@ -104,7 +104,7 @@ jobs:
 
     # Step 5: Run SonarCloud scan
     - name: SonarCloud Scan
-      uses: SonarSource/sonarcloud-github-action@v2
+      uses: SonarSource/sonarcloud-github-action@e44258b109568baa0df60ed515909fc6c72cba92
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -235,6 +235,8 @@ jobs:
     name: Push Docker Image to ACR
     needs: trivy_scan
     runs-on: ubuntu-latest
+    env:
+      ACR_NAME: ${{ secrets.ACR_NAME }}
     steps:
       # Step 1: Checkout repository
       - name: Checkout repository
@@ -252,19 +254,19 @@ jobs:
 
       # Step 4: Log in to Azure using a service principal from secrets
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       # Step 5: Log in to Azure Container Registry (ACR)
       - name: ACR Login
-        run: az acr login --name ${{ secrets.ACR_NAME }}
+        run: az acr login --name $ACR_NAME
 
       # Step 6: Tag Docker image for pushing to ACR
       - name: Tag Image for ACR
         run: |
-          docker tag anquilo-backend:latest ${{ secrets.ACR_NAME }}.azurecr.io/dotnet-backend:latest
+          docker tag anquilo-backend:latest $ACR_NAME.azurecr.io/dotnet-backend:latest
 
       # Step 7: Push the Docker image to ACR
       - name: Push to ACR
-        run: docker push ${{ secrets.ACR_NAME }}.azurecr.io/dotnet-backend:latest
+        run: docker push $ACR_NAME.azurecr.io/dotnet-backend:latest

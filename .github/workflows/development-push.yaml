@@ -109,14 +109,14 @@ jobs:
       
       # Step 2: Login using service principal credentials
       - name: Login to Azure using service principal
-        uses: azure/login@v1
+        uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       # Step 3: Deploy the backend to Azure App Service
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@657f0700ea5214d56a0400d8ac5e8023c963d25d
         with:
           app-name: 'anquilosaurios-development-backend'
           slot-name: 'Production'
