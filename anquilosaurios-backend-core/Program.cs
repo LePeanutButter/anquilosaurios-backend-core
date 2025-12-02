@@ -16,23 +16,22 @@ builder.Services.AddSwaggerGen();
 Env.Load();
 
 // Condicional pago PayPal
-if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_PAYPAL_CLIENTID")) &&
-    !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_PAYPAL_SECRET")))
-{
-    var paypalClientId = Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_PAYPAL_CLIENTID");
-    var paypalSecret = Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_PAYPAL_SECRET");
-    var paypalProvider = new PaypalProvider(paypalClientId, paypalSecret);
-    builder.Services.AddSingleton<IPaymentProvider>(paypalProvider);
-}
+//if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_PAYPAL_CLIENTID")) &&
+//    !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_PAYPAL_SECRET")))
+//{
+//    var paypalClientId = Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_PAYPAL_CLIENTID");
+//    var paypalSecret = Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_PAYPAL_SECRET");
+//    var paypalProvider = new PaypalProvider(paypalClientId, paypalSecret);
+//    builder.Services.AddSingleton<IPaymentProvider>(paypalProvider);
+//}
 
 // Condicional pago Stripe
-if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_STRIPE_APIKEY")))
-{
-    var stripeApiKey = Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_STRIPE_APIKEY");
-    var stripeProvider = new StripeProvider(stripeApiKey);
-    builder.Services.AddSingleton<IPaymentProvider>(stripeProvider);
-}
-
+//if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_STRIPE_APIKEY")))
+//{
+//    var stripeApiKey = Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_STRIPE_APIKEY");
+//    var stripeProvider = new StripeProvider(stripeApiKey);
+//    builder.Services.AddSingleton<IPaymentProvider>(stripeProvider);
+//}
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthProvider, LocalAuthProvider>();

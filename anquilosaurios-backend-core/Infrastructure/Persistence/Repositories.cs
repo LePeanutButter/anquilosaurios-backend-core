@@ -20,22 +20,23 @@ namespace aquilosaurios_backend_core.Infrastructure.Persistence
     public class UserRepository : IUserRepository
     {
         private readonly IMongoCollection<User> _collection;
-        public UserRepository(IMongoDatabase database)
-        {
-            _collection = database.GetCollection<User>("Users");
-        }
+        public UserRepository(IMongoDatabase database) => _collection = database.GetCollection<User>("Users");
+        public UserRepository(IMongoCollection<User> collection) => _collection = collection;
+        protected virtual Task<List<User>> ExecuteFindToListAsync(FilterDefinition<User> filter) =>
+            _collection.Find(filter).ToListAsync();
+        protected virtual Task<User> ExecuteFindFirstOrDefaultAsync(FilterDefinition<User> filter) =>
+            _collection.Find(filter).FirstOrDefaultAsync();
 
         public UserRepository()
         {
             var client = new MongoClient("mongodb://localhost:27017");
-
             var database = client.GetDatabase("AquilosauriosDB");
             _collection = database.GetCollection<User>("Users");
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
         {
-            var result = await _collection.Find(_ => true).ToListAsync();
+            var result = await ExecuteFindToListAsync(Builders<User>.Filter.Empty);
             return result;
         }
 
@@ -50,7 +51,7 @@ namespace aquilosaurios_backend_core.Infrastructure.Persistence
             if (!string.IsNullOrEmpty(filters.Name))
                 filter &= builder.Regex(u => u.Name, new BsonRegularExpression(filters.Name, "i"));
 
-            var result = await _collection.Find(filter).ToListAsync();
+            var result = await ExecuteFindToListAsync(filter);
             return result;
         }
 
@@ -61,7 +62,7 @@ namespace aquilosaurios_backend_core.Infrastructure.Persistence
                 Builders<User>.Filter.Eq(u => u.Username, identifier)
             );
 
-            return await _collection.Find(filter).FirstOrDefaultAsync();
+            return await ExecuteFindFirstOrDefaultAsync(filter);
         }
 
         public async Task CreateAsync(User user)

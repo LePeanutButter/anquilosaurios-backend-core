@@ -116,7 +116,11 @@ namespace aquilosaurios_backend_core.Tests.API.Tests
             var identifier = "john.doe@example.com";
             var rawPassword = "password123";
 
-            var loginDTO = new LoginDTO(identifier, rawPassword);
+            var loginDTO = new LoginDTO
+            {
+                Identifier = identifier,
+                RawPassword = rawPassword
+            };
 
             Assert.Equal(identifier, loginDTO.Identifier);
             Assert.Equal(rawPassword, loginDTO.RawPassword);

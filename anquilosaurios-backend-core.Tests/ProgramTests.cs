@@ -28,9 +28,6 @@ namespace aquilosaurios_backend_core.Tests.Infrastructure.Tests.External
             Assert.NotNull(services.GetService<IJwtService>());
             Assert.NotNull(services.GetService<IAuthService>());
             Assert.NotNull(services.GetService<IUserService>());
-
-            var paymentProviders = services.GetServices<IPaymentProvider>().ToList();
-            Assert.True(paymentProviders.Count >= 0);
         }
 
         [Fact]

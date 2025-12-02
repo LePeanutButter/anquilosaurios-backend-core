@@ -29,8 +29,11 @@ public class AuthController : ControllerBase
         {
             await _userService.CreateUserAsync(dto);
             
-            // Auto-login después de registro
-            var loginDto = new LoginDTO(dto.Email, dto.RawPassword);
+            var loginDto = new LoginDTO
+            {
+                Identifier = dto.Email,
+                RawPassword = dto.RawPassword 
+            };
             var (user, token) = await _authService.AuthenticateAsync(loginDto);
             
             return Ok(new ControllerResponse<object>(

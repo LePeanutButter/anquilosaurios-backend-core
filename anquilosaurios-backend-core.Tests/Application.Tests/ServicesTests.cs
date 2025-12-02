@@ -1,6 +1,7 @@
 ﻿using aquilosaurios_backend_core.API;
 using aquilosaurios_backend_core.Application;
 using aquilosaurios_backend_core.Domain.Models;
+using aquilosaurios_backend_core.Infrastructure.External;
 using aquilosaurios_backend_core.Infrastructure.Persistence;
 using aquilosaurios_backend_core.Shared;
 using FluentAssertions;
@@ -9,6 +10,57 @@ using Xunit;
 
 namespace aquilosaurios_backend_core.Tests.Application.Tests
 {
+    public class AuthServiceTests
+    {
+        private readonly Mock<IAuthProvider> _authMock = new();
+        private readonly Mock<IJwtService> _jwtMock = new();
+        private readonly AuthService _service;
+
+        public AuthServiceTests()
+        {
+            _service = new AuthService(_authMock.Object, _jwtMock.Object);
+        }
+
+        [Fact]
+        public async Task AuthenticateAsync_ShouldReturnNulls_WhenAuthenticationFails()
+        {
+            var dto = new LoginDTO { Identifier = "x", RawPassword = "y" };
+
+            _authMock.Setup(a => a.AuthenticateAsync(dto.Identifier, dto.RawPassword))
+                     .ReturnsAsync((User?)null);
+
+            var result = await _service.AuthenticateAsync(dto);
+
+            result.user.Should().BeNull();
+            result.token.Should().BeNull();
+            _jwtMock.Verify(j => j.GenerateToken(It.IsAny<User>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task AuthenticateAsync_ShouldReturnUserAndToken_WhenAuthenticationSucceeds()
+        {
+            var user = new User("A", "a@mail.com", "a", "pw");
+            var dto = new LoginDTO { Identifier = user.Email, RawPassword = "pw" };
+
+            _authMock.Setup(a => a.AuthenticateAsync(dto.Identifier, dto.RawPassword))
+                     .ReturnsAsync(user);
+
+            _jwtMock.Setup(j => j.GenerateToken(user)).Returns("jwt-token");
+
+            var result = await _service.AuthenticateAsync(dto);
+
+            result.user.Should().Be(user);
+            result.token.Should().Be("jwt-token");
+        }
+
+        [Fact]
+        public async Task SignOutAsync_ShouldCompleteSuccessfully()
+        {
+            var id = Guid.NewGuid();
+            await _service.SignOutAsync(id);
+        }
+    }
+
     public class UserServiceTests
     {
         private readonly Mock<IUserRepository> _repoMock;

@@ -16,16 +16,25 @@ namespace aquilosaurios_backend_core.Infrastructure.External
     public class JwtService : IJwtService
     {
         private readonly string _secretKey;
-        private readonly string _issuer;
-        private readonly string _audience;
-        private readonly int _expirationMinutes;
+
+        public string Issuer { get; }
+        public string Audience { get; }
+        public int ExpirationMinutes { get; }
 
         public JwtService(IConfiguration config)
         {
             _secretKey = config["Jwt:Key"] ?? throw new Exception("Jwt:Key no configurado en appsettings.json");
-            _issuer = config["Jwt:Issuer"] ?? "aquilosaurios";
-            _audience = config["Jwt:Audience"] ?? "aquilosaurios_users";
-            _expirationMinutes = int.Parse(config["Jwt:ExpirationMinutes"] ?? "15");
+            Issuer = config["Jwt:Issuer"] ?? "aquilosaurios";
+            Audience = config["Jwt:Audience"] ?? "aquilosaurios_users";
+
+            if (int.TryParse(config["Jwt:ExpirationMinutes"] ?? "15", out int expiration))
+            {
+                ExpirationMinutes = expiration;
+            }
+            else
+            {
+                throw new FormatException($"The given key 'Jwt:ExpirationMinutes' was not a valid integer. Value: {config["Jwt:ExpirationMinutes"]}");
+            }
         }
 
         public string GenerateToken(User user)
@@ -47,10 +56,10 @@ namespace aquilosaurios_backend_core.Infrastructure.External
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: _issuer,
-                audience: _audience,
+                issuer: Issuer,
+                audience: Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(_expirationMinutes),
+                expires: DateTime.UtcNow.AddMinutes(ExpirationMinutes),
                 signingCredentials: credentials
             );
 
@@ -66,9 +75,9 @@ namespace aquilosaurios_backend_core.Infrastructure.External
                 var parameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = _issuer,
+                    ValidIssuer = Issuer,
                     ValidateAudience = true,
-                    ValidAudience = _audience,
+                    ValidAudience = Audience,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = key,

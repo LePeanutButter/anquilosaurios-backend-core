@@ -70,7 +70,12 @@ namespace aquilosaurios_backend_core.Tests.API.Controllers
         [Fact]
         public async Task Login_ReturnsOk_WhenCredentialsValid()
         {
-            var dto = new LoginDTO("test@example.com", "Password123!");
+            var dto = new LoginDTO
+            {
+                Identifier = "test@example.com",
+                RawPassword = "Password123!"
+            };
+
             var user = new User("Test User", "test@example.com", "testuser", "Password123!");
             var token = "dummy-token";
 
@@ -88,7 +93,11 @@ namespace aquilosaurios_backend_core.Tests.API.Controllers
         [Fact]
         public async Task Login_ReturnsUnauthorized_WhenCredentialsInvalid()
         {
-            var dto = new LoginDTO("test@example.com", "wrongpassword");
+            var dto = new LoginDTO
+            {
+                Identifier = "test@example.com",
+                RawPassword = "wrongpassword"
+            };
             _authServiceMock.Setup(a => a.AuthenticateAsync(dto)).ReturnsAsync((null, null));
 
             var actionResult = await _controller.Login(dto);
@@ -151,5 +160,286 @@ namespace aquilosaurios_backend_core.Tests.API.Controllers
             Assert.NotNull(result);
             var response = Assert.IsType<ControllerResponse<object>>(result.Value);
         }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsUserInfo_WhenAllClaimsAvailable()
+        {
+            var userId = Guid.NewGuid();
+            var claims = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim("userId", userId.ToString()),
+                new Claim("name", "Test User"),
+                new Claim("username", "testuser"),
+                new Claim("email", "test@example.com"),
+                new Claim("isAdmin", "false"),
+                new Claim("authProvider", "Local")
+            ]));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claims }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsBadRequest_WhenUserIdClaimIsMissing()
+        {
+            var claims = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim("name", "Test User"),
+                new Claim("username", "testuser"),
+                new Claim("email", "test@example.com"),
+                new Claim("isAdmin", "false"),
+                new Claim("authProvider", "Local")
+            ]));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claims }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsBadRequest_WhenNameClaimIsMissing()
+        {
+            var claims = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim("userId", Guid.NewGuid().ToString()),
+                new Claim("username", "testuser"),
+                new Claim("email", "test@example.com"),
+                new Claim("isAdmin", "false"),
+                new Claim("authProvider", "Local")
+            ]));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claims }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsBadRequest_WhenUsernameClaimIsMissing()
+        {
+            var claims = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim("userId", Guid.NewGuid().ToString()),
+                new Claim("name", "Test User"),
+                new Claim("email", "test@example.com"),
+                new Claim("isAdmin", "false"),
+                new Claim("authProvider", "Local")
+            ]));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claims }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsBadRequest_WhenEmailClaimIsMissing()
+        {
+            var claims = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim("userId", Guid.NewGuid().ToString()),
+                new Claim("name", "Test User"),
+                new Claim("username", "testuser"),
+                new Claim("isAdmin", "false"),
+                new Claim("authProvider", "Local")
+            ]));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claims }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsBadRequest_WhenIsAdminClaimIsMissing()
+        {
+            var claims = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim("userId", Guid.NewGuid().ToString()),
+                new Claim("name", "Test User"),
+                new Claim("username", "testuser"),
+                new Claim("email", "test@example.com"),
+                new Claim("authProvider", "Local")
+            ]));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claims }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsBadRequest_WhenAuthProviderClaimIsMissing()
+        {
+            var claims = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim("userId", Guid.NewGuid().ToString()),
+                new Claim("name", "Test User"),
+                new Claim("username", "testuser"),
+                new Claim("email", "test@example.com"),
+                new Claim("isAdmin", "false")
+            ]));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claims }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsUnauthorized_WhenNoUserIsAuthenticated()
+        {
+            var claims = new ClaimsPrincipal(new ClaimsIdentity());
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claims }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsBadRequest_WhenClaimsHaveEmptyValues()
+        {
+            var claims = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim("userId", ""),
+                new Claim("name", ""),
+                new Claim("username", ""),
+                new Claim("email", ""),
+                new Claim("isAdmin", ""),
+                new Claim("authProvider", "")
+            ]));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claims }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsBadRequest_WhenClaimsAreMalformed()
+        {
+            var claims = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim("userId", Guid.NewGuid().ToString()),
+                new Claim("name", "Test User"),
+                new Claim("username", "testuser"),
+                new Claim("email", "test@example.com"),
+                new Claim("isAdmin", "not-a-boolean"),
+                new Claim("authProvider", "Local")
+            ]));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claims }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsInternalServerError_WhenExceptionOccursWhileAccessingClaims()
+        {
+            var claims = new ClaimsPrincipal(new ClaimsIdentity());
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claims }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
+        [Fact]
+        public void GetCurrentUser_ReturnsUnauthorized_WhenUserNotLoggedIn()
+        {
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal() }
+            };
+
+            var actionResult = _controller.GetCurrentUser();
+
+            var result = actionResult.Result as OkObjectResult;
+            Assert.NotNull(result);
+            var response = Assert.IsType<ControllerResponse<object>>(result.Value);
+            Assert.Equal("Usuario actual", response.Message);
+        }
+
     }
 }

@@ -28,10 +28,10 @@
         public bool? AdminPrivilege { get; set; }
     }
 
-    public class LoginDTO(string identifier, string rawPassword)
+    public class LoginDTO
     {
-        public string Identifier { get; set; } = identifier;
-        public string RawPassword { get; set; } = rawPassword;
+        public string? Identifier { get; set; }
+        public string? RawPassword { get; set; }
     }
 
     public class AuthCredentialDTO(string credential)

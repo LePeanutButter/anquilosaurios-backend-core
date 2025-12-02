@@ -129,5 +129,100 @@ namespace aquilosaurios_backend_core.Tests.Infrastructure.Tests.External
             jwt.Issuer.Should().Be("test_issuer");
             jwt.Audiences.Should().Contain("test_audience");
         }
+
+        [Fact]
+        public void JwtService_Constructor_ShouldThrowException_WhenJwtKeyIsMissing()
+        {
+            var inMemoryConfig = new Dictionary<string, string>
+            {
+                { "Jwt:Issuer", "test_issuer" },
+                { "Jwt:Audience", "test_audience" },
+                { "Jwt:ExpirationMinutes", "1" }
+            };
+
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemoryConfig)
+                .Build();
+
+            Action act = () => new JwtService(config);
+            act.Should().Throw<Exception>().WithMessage("Jwt:Key no configurado en appsettings.json");
+        }
+
+        [Fact]
+        public void JwtService_Constructor_ShouldUseDefaultIssuer_WhenJwtIssuerIsMissing()
+        {
+            var inMemoryConfig = new Dictionary<string, string>
+            {
+                { "Jwt:Key", _secretKey },
+                { "Jwt:Audience", "test_audience" },
+                { "Jwt:ExpirationMinutes", "1" }
+            };
+
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemoryConfig)
+                .Build();
+
+            var jwtService = new JwtService(config);
+
+            jwtService.Issuer.Should().Be("aquilosaurios");
+        }
+
+        [Fact]
+        public void JwtService_Constructor_ShouldUseDefaultAudience_WhenJwtAudienceIsMissing()
+        {
+            var inMemoryConfig = new Dictionary<string, string>
+    {
+        { "Jwt:Key", _secretKey },
+        { "Jwt:Issuer", "test_issuer" },
+        { "Jwt:ExpirationMinutes", "1" }
+    };
+
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemoryConfig)
+                .Build();
+
+            var jwtService = new JwtService(config);
+
+            jwtService.Audience.Should().Be("aquilosaurios_users");
+        }
+
+        [Fact]
+        public void JwtService_Constructor_ShouldUseDefaultExpiration_WhenJwtExpirationMinutesIsMissing()
+        {
+            var inMemoryConfig = new Dictionary<string, string>
+            {
+                { "Jwt:Key", _secretKey },
+                { "Jwt:Issuer", "test_issuer" },
+                { "Jwt:Audience", "test_audience" }
+            };
+
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemoryConfig)
+                .Build();
+
+            var jwtService = new JwtService(config);
+
+            jwtService.ExpirationMinutes.Should().Be(15);
+        }
+
+        [Fact]
+        public void JwtService_Constructor_ShouldThrowException_WhenJwtExpirationMinutesIsInvalid()
+        {
+            var inMemoryConfig = new Dictionary<string, string>
+            {
+                { "Jwt:Key", _secretKey },
+                { "Jwt:Issuer", "test_issuer" },
+                { "Jwt:Audience", "test_audience" },
+                { "Jwt:ExpirationMinutes", "invalid" }
+            };
+
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemoryConfig)
+                .Build();
+
+            Action act = () => new JwtService(config);
+
+            act.Should().Throw<FormatException>().WithMessage("The given key 'Jwt:ExpirationMinutes' was not a valid integer.*");
+        }
     }
 }

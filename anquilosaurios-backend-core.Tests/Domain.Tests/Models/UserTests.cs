@@ -141,5 +141,81 @@ namespace aquilosaurios_backend_core.Tests.Domain.Tests.Models
 
             user.PasswordHash.Should().Be(expectedHash);
         }
+
+        [Fact]
+        public void AddAchievement_ShouldInitializeAchievementList_WhenNull()
+        {
+            var user = new User("Charlie", AuthProvider.LOCAL);
+            var achievement = new Achievement("Champion", "Win 10 matches", DateTime.UtcNow);
+
+            user.AddAchievement(achievement);
+
+            user.Achievements.Should().HaveCount(1);
+            user.Achievements.Should().Contain(achievement);
+        }
+
+        [Fact]
+        public void AddAchievement_ShouldAddAchievement_WhenListIsNotEmpty()
+        {
+            var user = new User("David", AuthProvider.LOCAL);
+            var firstAchievement = new Achievement("Champion", "Win 10 matches", DateTime.UtcNow);
+            user.AddAchievement(firstAchievement);
+
+            var secondAchievement = new Achievement("Master", "Win 100 matches", DateTime.UtcNow);
+
+            user.AddAchievement(secondAchievement);
+
+            user.Achievements.Should().HaveCount(2);
+            user.Achievements.Should().Contain(firstAchievement);
+            user.Achievements.Should().Contain(secondAchievement);
+        }
+
+        [Fact]
+        public void AddPurchaseId_ShouldInitializePurchaseList_WhenNull()
+        {
+            var user = new User("Eva", AuthProvider.LOCAL);
+            var purchaseId = Guid.NewGuid();
+
+            user.AddPurchaseId(purchaseId);
+
+            user.PurchasesIds.Should().HaveCount(1);
+            user.PurchasesIds.Should().Contain(purchaseId);
+        }
+
+        [Fact]
+        public void AddPurchaseId_ShouldNotAddDuplicate_WhenAlreadyInList()
+        {
+            var user = new User("Frank", AuthProvider.LOCAL);
+            var purchaseId = Guid.NewGuid();
+            user.AddPurchaseId(purchaseId);
+
+            user.AddPurchaseId(purchaseId);
+
+            user.PurchasesIds.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public void AddMatchId_ShouldInitializeMatchList_WhenNull()
+        {
+            var user = new User("George", AuthProvider.LOCAL);
+            var matchId = Guid.NewGuid();
+
+            user.AddMatchId(matchId);
+
+            user.MatchesIds.Should().HaveCount(1);
+            user.MatchesIds.Should().Contain(matchId);
+        }
+
+        [Fact]
+        public void AddMatchId_ShouldNotAddDuplicate_WhenAlreadyInList()
+        {
+            var user = new User("Hannah", AuthProvider.LOCAL);
+            var matchId = Guid.NewGuid();
+            user.AddMatchId(matchId);
+
+            user.AddMatchId(matchId);
+
+            user.MatchesIds.Should().HaveCount(1);
+        }
     }
 }

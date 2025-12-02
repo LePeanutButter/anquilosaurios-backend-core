@@ -102,5 +102,71 @@ namespace aquilosaurios_backend_core.Tests.Domain.Tests.Models
             match.PlayersIds.Should().HaveCount(2);
             match.WinnersIds.Should().HaveCount(1).And.Contain(player1);
         }
+
+        [Fact]
+        public void RoundSummary_ShouldInitializeEmptyCollections_WhenCreated()
+        {
+            var round = new RoundSummary();
+
+            round.WinnersIds.Should().NotBeNull().And.BeEmpty();
+            round.DeathsPerPlayer.Should().NotBeNull().And.BeEmpty();
+        }
+
+        [Fact]
+        public void Can_AddWinnersAndDeaths_WhenCollectionsAreEmpty()
+        {
+            var round = new RoundSummary();
+            var playerId = Guid.NewGuid();
+
+            round.WinnersIds.Add(playerId);
+            round.DeathsPerPlayer[playerId] = 2;
+
+            round.WinnersIds.Should().Contain(playerId);
+            round.DeathsPerPlayer[playerId].Should().Be(2);
+        }
+
+        [Fact]
+        public void MatchSummary_ShouldInitializeEmptyCollections_WhenCreated()
+        {
+            var match = new MatchSummary();
+
+            match.PlayersIds.Should().NotBeNull().And.BeEmpty();
+            match.WinnersIds.Should().NotBeNull().And.BeEmpty();
+            match.Rounds.Should().NotBeNull().And.BeEmpty();
+        }
+
+        [Fact]
+        public void AddPlayer_ShouldInitializePlayersList_WhenEmpty()
+        {
+            var match = new MatchSummary();
+            var playerId = Guid.NewGuid();
+
+            match.AddPlayer(playerId);
+
+            match.PlayersIds.Should().Contain(playerId);
+        }
+
+        [Fact]
+        public void AddWinner_ShouldInitializeWinnersList_WhenEmpty()
+        {
+            var match = new MatchSummary();
+            var winnerId = Guid.NewGuid();
+
+            match.AddWinner(winnerId);
+
+            match.WinnersIds.Should().Contain(winnerId);
+        }
+
+        [Fact]
+        public void AddRound_ShouldInitializeRoundsList_WhenEmpty()
+        {
+            var match = new MatchSummary();
+            var round = new RoundSummary { RoundNumber = 1 };
+
+            match.AddRound(round);
+
+            match.Rounds.Should().Contain(round);
+        }
+
     }
 }

@@ -24,7 +24,11 @@ namespace aquilosaurios_backend_core.Tests.API.Controllers
         [Fact]
         public async Task Authenticate_ReturnsOk_WhenValidCredentials()
         {
-            var dto = new LoginDTO("test@example.com", "Password123!");
+            var dto = new LoginDTO
+            {
+                Identifier = "test@example.com",
+                RawPassword = "Password123!"
+            };
             var user = new User("Test User", "test@example.com", "testuser", "Password123!");
             var token = "dummy-token";
 
@@ -42,7 +46,11 @@ namespace aquilosaurios_backend_core.Tests.API.Controllers
         [Fact]
         public async Task Authenticate_ReturnsUnauthorized_WhenInvalidCredentials()
         {
-            var dto = new LoginDTO("test@example.com", "wrongpassword");
+            var dto = new LoginDTO
+            {
+                Identifier = "test@example.com",
+                RawPassword = "wrongpassword"
+            };
 
             _authServiceMock.Setup(a => a.AuthenticateAsync(dto)).ReturnsAsync((null, null));
 
