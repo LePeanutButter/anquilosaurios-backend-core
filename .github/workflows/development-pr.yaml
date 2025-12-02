@@ -100,7 +100,7 @@ jobs:
     - name: List downloaded coverage
       run: |
         echo "Downloaded coverage:"
-        dir backend-coverage /s
+        Get-ChildItem -Path backend-coverage -Recurse
 
     # Step 5: Run SonarCloud scan
     - name: SonarCloud Scan
