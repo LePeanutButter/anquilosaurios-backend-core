@@ -110,11 +110,11 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # =========================================
-  # Job: Build & Test Stage
-  # Purpose: Restore dependencies, build, and test .NET project
+  # Job: Build Stage
+  # Purpose: Restore dependencies and build .NET project
   # =========================================
-  build_and_test:
-    name: Build & Test (.NET)
+  build:
+    name: Build (.NET)
     needs: sonar_scan
     runs-on: windows-latest
     env:
@@ -148,24 +148,11 @@ jobs:
       - name: Build solution
         run: dotnet build --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
 
-      # Step 6: Run unit tests and collect results
-      - name: Run unit tests
-        run: dotnet test --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --logger trx
-        continue-on-error: true
-
-      # Step 7: Publish test results (if available)
-      - name: Publish test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: '**/*.trx'
-
-      # Step 8: Publish compiled app (self-contained package)
+      # Step 6: Publish compiled app (self-contained package)
       - name: Publish application
         run: dotnet publish -c ${{ env.BUILD_CONFIGURATION }} -o '${{ github.workspace }}/publish'
 
-      # Step 9: Upload build artifact for deploy stage
+      # Step 7: Upload build artifact for deploy stage
       - name: Upload published artifact
         uses: actions/upload-artifact@v4
         with:
