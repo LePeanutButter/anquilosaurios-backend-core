@@ -49,6 +49,7 @@ jobs:
       # Step 4: Run tests with coverage (Coverlet)
       - name: Run tests with Coverlet coverage
         run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool
           dotnet test anquilosaurios-backend-core.Tests --settings coverlet.runsettings --configuration Debug --collect:"XPlat Code Coverage" --results-directory ./TestResults
           reportgenerator -reports:TestResults/*/coverage.cobertura.xml -targetdir:TestResults -reporttypes:Cobertura
 
