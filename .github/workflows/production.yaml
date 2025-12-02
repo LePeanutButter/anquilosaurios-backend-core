@@ -78,7 +78,7 @@ jobs:
   sonar_scan:
     name: SonarCloud Analysis (.NET)
     needs: test_and_coverage
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
     # Step 1: Checkout source code
     - name: Checkout repository
@@ -103,7 +103,7 @@ jobs:
     - name: List downloaded coverage
       run: |
         echo "Downloaded coverage:"
-        Get-ChildItem -Path backend-coverage -Recurse
+        ls -R backend-coverage
 
     # Step 5: Run SonarCloud scan
     - name: SonarCloud Scan
