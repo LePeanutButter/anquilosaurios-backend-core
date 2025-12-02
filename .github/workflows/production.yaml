@@ -61,7 +61,7 @@ jobs:
       - name: List coverage files
         run: |
           echo "Coverage output:"
-          dir TestResults /s
+          Get-ChildItem -Path TestResults -Recurse
       
       # Step 5: Upload the coverage results as an artifact for the SonarCloud job
       - name: Upload Coverage Artifact
