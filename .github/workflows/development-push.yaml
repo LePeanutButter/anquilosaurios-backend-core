@@ -4,19 +4,16 @@
 # Description:
 #   - Restores, builds, and tests the .NET backend
 #   - Publishes and deploys to Azure Web App
-#   - Runs on every push or pull request to 'development'
+#   - Runs on every push to 'development'
 # ===========================================
 
 name: CI Build & Deploy (.NET Backend - Development)
 
 # -------------------------------------------
-# Trigger: Run workflow on push or PR to 'development' branch
+# Trigger: Run workflow on push to 'development' branch
 # -------------------------------------------
 on:
   push:
-    branches:
-      - development
-  pull_request:
     branches:
       - development
   workflow_dispatch:
@@ -114,7 +111,7 @@ jobs:
       - name: Login to Azure using service principal
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_DEV_ENVIRONMENT }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       # Step 3: Deploy the backend to Azure App Service
       - name: Deploy to Azure Web App

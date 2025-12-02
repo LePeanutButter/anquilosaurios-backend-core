@@ -26,16 +26,103 @@ on:
 # -------------------------------------------
 jobs:
   # =========================================
-  # Job: Build & Test Stage
-  # Purpose: Restore dependencies, build, and test .NET project
+  # Job: Dynamic Analysis (Tests + Coverage)
+  # Purpose: Run Coverlet tests and generate coverage for SonarCloud
   # =========================================
-  build_and_test:
+  test_and_coverage:
+    name: .NET Tests & Coverage (Coverlet)
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout source code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Step 2: Setup Dotnet
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # Step 3: Cache dependencies
+      - name: Restore dependencies
+        run: dotnet restore
+  
+      # Step 4: Run tests with coverage (Coverlet)
+      - name: Run tests with Coverlet coverage
+        run: >
+          dotnet test anquilosaurios-backend-core.Tests
+          --settings coverlet.runsettings
+          --configuration Debug
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+
+      - name: List coverage files
+        run: |
+          echo "Coverage output:"
+          dir TestResults /s
+      
+      # Step 5: Upload the coverage results as an artifact for the SonarCloud job
+      - name: Upload Coverage Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: TestResults
+
+  # =========================================
+  # Job: SonarCloud Scan
+  # Purpose: Run static code analysis with SonarCloud
+  # =========================================
+  sonar_scan:
+    name: SonarCloud Analysis (.NET)
+    needs: test_and_coverage
+    runs-on: windows-latest
+    steps:
+    # Step 1: Checkout source code
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+          fetch-depth: 0
+
+    # Step 2: Install Java
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+          dotnet-version: "8.0.x"
+
+    # Step 3: Download coverage artifact
+    - name: Download Coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-coverage
+        path: backend-coverage
+
+    # Step 4: Debug coverage files
+    - name: List downloaded coverage
+      run: |
+        echo "Downloaded coverage:"
+        dir backend-coverage /s
+
+    # Step 5: Run SonarCloud scan
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # =========================================
+  # Job: Build Stage
+  # Purpose: Restore dependencies and build .NET project
+  # =========================================
+  build:
     name: Build & Test (.NET)
+    needs: sonar_scan
     runs-on: windows-latest
     env:
-      DOTNET_VERSION: '8.0.x'
-      BUILD_CONFIGURATION: 'Release'
-
+        DOTNET_VERSION: '8.0.x'
+        BUILD_CONFIGURATION: 'Release'
     steps:
       # Step 1: Checkout source code
       - name: Checkout repository
@@ -54,7 +141,7 @@ jobs:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
-            nuget-${{ runner.os }}
+              nuget-${{ runner.os }}
 
       # Step 4: Restore dependencies
       - name: Restore dependencies
@@ -64,24 +151,11 @@ jobs:
       - name: Build solution
         run: dotnet build --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
 
-      # Step 6: Run unit tests and collect results
-      - name: Run unit tests
-        run: dotnet test --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --logger trx
-        continue-on-error: true
-
-      # Step 7: Publish test results (if available)
-      - name: Publish test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: '**/*.trx'
-
-      # Step 8: Publish compiled app (self-contained package)
+      # Step 6: Publish compiled app (self-contained package)
       - name: Publish application
         run: dotnet publish -c ${{ env.BUILD_CONFIGURATION }} -o '${{ github.workspace }}/publish'
 
-      # Step 9: Upload build artifact for deploy stage
+      # Step 7: Upload build artifact for deploy stage
       - name: Upload published artifact
         uses: actions/upload-artifact@v4
         with:
@@ -89,44 +163,111 @@ jobs:
           path: ${{ github.workspace }}/publish
 
   # =========================================
-  # Job: Deploy Stage
-  # Purpose: Deploy published app to Azure Web App
-  # Depends on: build_and_test
+  # Job: Build Docker Image
+  # Purpose: Build Docker image from backend build artifacts
   # =========================================
-  deploy:
-    if: github.event_name == 'push'
-    name: Deploy to Azure Web App (.NET Backend)
-    needs: build_and_test
-    runs-on: windows-latest
-    permissions:
-      id-token: write
-      contents: read
-
+  docker_build:
+    name: Build Docker Image using CI build
+    needs: build
+    runs-on: ubuntu-latest
     steps:
-      # Step 1: Download published artifact from build stage
+      # Step 1: Checkout the repository to access Dockerfile and context
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Download the backend build artifacts from the previous build job
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
           name: dotnet-app
-          path: .
-      
-      # Step 2: Login to Azure using federated credentials
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_930989A613B14ACAA4B82F5AB8812BAB }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_30ADB85F1E4E4D10AA037C2CCCC1F5DB }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B9FC2DC3E4414679811EB845CDC0322F }}
+          path: build
 
-      # Step 3: Deploy the backend to Azure App Service
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
+      # Step 3: Build Docker image using the downloaded build artifacts
+      - name: Build Docker Image
+        run: docker build -t anquilo-backend:latest .
+
+      # Step 4: Save the Docker image as a tar archive for artifact storage
+      - name: Save Docker Image
+        run: docker save anquilo-backend -o backend.tar
+
+      # Step 5: Upload the saved Docker image tarball as a workflow artifact
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
         with:
-          app-name: 'anquilosaurios-production-backend'
-          slot-name: 'Production'
-          package: .
-          
-      # Step 4: Logout from Azure session
-      - name: Logout from Azure
-        run: az logout
+          name: docker-image
+          path: backend.tar
+
+  # =========================================
+  # Job: Security Scan (Trivy)
+  # Purpose: Scan Docker image for vulnerabilities
+  # =========================================
+  trivy_scan:
+    name: Run Trivy Security Scan
+    needs: docker_build
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Download the Docker image artifact created in the previous job
+      - name: Download docker image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: .
+
+      # Step 2: Load the Docker image from the tar archive into Docker
+      - name: Load Docker image
+        run: docker load -i backend.tar
+
+      # Step 3: Install Trivy security scanner on the runner
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install wget -y
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.2_Linux-64bit.deb
+          sudo dpkg -i trivy_0.50.2_Linux-64bit.deb
+
+      # Step 4: Scan the Docker image for HIGH and CRITICAL vulnerabilities; fail job if found
+      - name: Run Trivy Scan
+        run: trivy image --exit-code 1 --severity HIGH,CRITICAL anquilo-backend:latest
+
+  # =========================================
+  # Job: Push Docker Image to ACR
+  # Purpose: Deploy Docker image to Azure Container Registry
+  # =========================================
+  push_to_acr:
+    if: github.event_name == 'push'
+    name: Push Docker Image to ACR
+    needs: trivy_scan
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Download Docker image artifact from previous job
+      - uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: .
+
+      # Step 3: Load the Docker image from the tar archive
+      - name: Load Docker image
+        run: docker load -i backend.tar
+
+      # Step 4: Log in to Azure using a service principal from secrets
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Step 5: Log in to Azure Container Registry (ACR)
+      - name: ACR Login
+        run: az acr login --name ${{ secrets.ACR_NAME }}
+
+      # Step 6: Tag Docker image for pushing to ACR
+      - name: Tag Image for ACR
+        run: |
+          docker tag anquilo-backend:latest ${{ secrets.ACR_NAME }}.azurecr.io/dotnet-backend:latest
+
+      # Step 7: Push the Docker image to ACR
+      - name: Push to ACR
+        run: docker push ${{ secrets.ACR_NAME }}.azurecr.io/dotnet-backend:latest

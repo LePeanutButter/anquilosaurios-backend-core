@@ -1,0 +1,173 @@
+# ===========================================
+# GitHub Actions Workflow: CI Build & Deploy
+# Environment: Development
+# Description:
+# - **Continuous Integration (CI)**: Executes **dynamic analysis** (unit tests with code coverage via **Coverlet**), runs **static analysis** via **SonarCloud**, and performs a **Release build** and **unit test run**.
+# - **Continuous Deployment (CD)**: Publishes the compiled .NET backend as an artifact, ready for an optional, subsequent deployment job (deployment job is not shown in this file).
+# - **Trigger**: Runs automatically on every **pull request** targeting the 'development' branch, and can be run **manually** via `workflow_dispatch`.
+# ===========================================
+
+name: CI Build & Deploy (.NET Backend - Development)
+
+# -------------------------------------------
+# Trigger: Run workflow on PR to 'development' branch
+# -------------------------------------------
+on:
+  pull_request:
+    branches:
+      - development
+  workflow_dispatch:
+
+# -------------------------------------------
+# Jobs Definition
+# -------------------------------------------
+jobs:
+  # =========================================
+  # Job: Dynamic Analysis (Tests + Coverage)
+  # Purpose: Run Coverlet tests and generate coverage for SonarCloud
+  # =========================================
+  test_and_coverage:
+    name: .NET Tests & Coverage (Coverlet)
+    runs-on: windows-latest
+    steps:
+      # Step 1: Checkout source code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Step 2: Setup Dotnet
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # Step 3: Cache dependencies
+      - name: Restore dependencies
+        run: dotnet restore
+  
+      # Step 4: Run tests with coverage (Coverlet)
+      - name: Run tests with Coverlet coverage
+        run: >
+          dotnet test anquilosaurios-backend-core.Tests
+          --settings coverlet.runsettings
+          --configuration Debug
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+
+      - name: List coverage files
+        run: |
+          echo "Coverage output:"
+          dir TestResults /s
+      
+      # Step 5: Upload the coverage results as an artifact for the SonarCloud job
+      - name: Upload Coverage Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: TestResults
+
+  # =========================================
+  # Job: SonarCloud Scan
+  # Purpose: Run static code analysis with SonarCloud
+  # =========================================
+  sonar_scan:
+    name: SonarCloud Analysis (.NET)
+    needs: test_and_coverage
+    runs-on: windows-latest
+    steps:
+    # Step 1: Checkout source code
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+          fetch-depth: 0
+
+    # Step 2: Install Java
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+          dotnet-version: "8.0.x"
+
+    # Step 3: Download coverage artifact
+    - name: Download Coverage
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-coverage
+        path: backend-coverage
+
+    # Step 4: Debug coverage files
+    - name: List downloaded coverage
+      run: |
+        echo "Downloaded coverage:"
+        dir backend-coverage /s
+
+    # Step 5: Run SonarCloud scan
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # =========================================
+  # Job: Build & Test Stage
+  # Purpose: Restore dependencies, build, and test .NET project
+  # =========================================
+  build_and_test:
+    name: Build & Test (.NET)
+    needs: sonar_scan
+    runs-on: windows-latest
+    env:
+        DOTNET_VERSION: '8.0.x'
+        BUILD_CONFIGURATION: 'Release'
+    steps:
+      # Step 1: Checkout source code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Setup .NET environment
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Step 3: Cache NuGet packages for faster builds
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+              nuget-${{ runner.os }}
+
+      # Step 4: Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # Step 5: Build all projects in Release mode
+      - name: Build solution
+        run: dotnet build --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+      # Step 6: Run unit tests and collect results
+      - name: Run unit tests
+        run: dotnet test --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --logger trx
+        continue-on-error: true
+
+      # Step 7: Publish test results (if available)
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/*.trx'
+
+      # Step 8: Publish compiled app (self-contained package)
+      - name: Publish application
+        run: dotnet publish -c ${{ env.BUILD_CONFIGURATION }} -o '${{ github.workspace }}/publish'
+
+      # Step 9: Upload build artifact for deploy stage
+      - name: Upload published artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-app
+          path: ${{ github.workspace }}/publish
