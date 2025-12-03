@@ -214,17 +214,14 @@ jobs:
       - name: Load Docker image
         run: docker load -i backend.tar
 
-      # Step 3: Install Trivy security scanner on the runner
-      - name: Install Trivy
-        run: |
-          sudo apt-get update
-          sudo apt-get install wget -y
-          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.2_Linux-64bit.deb
-          sudo dpkg -i trivy_0.50.2_Linux-64bit.deb
-
-      # Step 4: Scan the Docker image for HIGH and CRITICAL vulnerabilities; fail job if found
+      # Step 3: Use the official Trivy Action to install and scan
       - name: Run Trivy Scan
-        run: trivy image --exit-code 1 --severity HIGH,CRITICAL anquilo-backend:latest
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: anquilo-backend:latest
+          format: 'table' 
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
 
   # =========================================
   # Job: Push Docker Image to ACR
