@@ -1,11 +1,14 @@
 using DotNetEnv;
 
 using System.Text;
+using aquilosaurios_backend_core.Configuration;
 using aquilosaurios_backend_core.Application;
 using aquilosaurios_backend_core.Infrastructure.External;
 using aquilosaurios_backend_core.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +17,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 Env.Load();
+
+builder.Configuration.AddEnvironmentVariables();
 
 // Condicional pago PayPal
 //if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PAYMENT_PROVIDERS_PAYPAL_CLIENTID")) &&
@@ -64,14 +69,38 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSvelteApp", policy =>
+    options.AddPolicy("AllowFrontendApps", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(
+            "https://anquilosaurios-development-frontend-bwcbgzf6byefdthz.eastus-01.azurewebsites.net",
+            "https://anquilosaurios-development-webgl-a3ewf7dehzgugtbn.eastus-01.azurewebsites.net"
+            )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
 });
+
+builder.Services.Configure<MongoSettings>(options =>
+{
+    options.ConnectionString = builder.Configuration["ConnectionStrings:MongoDB"]!;
+    options.DatabaseName = builder.Configuration["MongoDB:DatabaseName"]!;
+});
+
+builder.Services.AddSingleton<IMongoClient>(sp =>
+{
+    var mongo = sp.GetRequiredService<IOptions<MongoSettings>>().Value;
+    return new MongoClient(mongo.ConnectionString);
+});
+
+builder.Services.AddScoped(sp =>
+{
+    var mongo = sp.GetRequiredService<IOptions<MongoSettings>>().Value;
+    var client = sp.GetRequiredService<IMongoClient>();
+    return client.GetDatabase(mongo.DatabaseName);
+});
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 var app = builder.Build();
 
@@ -82,10 +111,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowSvelteApp");
+app.UseCors("AllowFrontendApps");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.Run();
+await app.RunAsync();
 
-public partial class Program { }
+public static partial class Program { }
