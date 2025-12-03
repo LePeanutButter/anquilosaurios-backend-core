@@ -72,8 +72,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontendApps", policy =>
     {
         policy.WithOrigins(
-            "https://anquilosaurios-development-frontend-bwcbgzf6byefdthz.eastus-01.azurewebsites.net",
-            "https://anquilosaurios-development-webgl-a3ewf7dehzgugtbn.eastus-01.azurewebsites.net"
+            "http://svelte_frontend:80",
+            "http://unity_webgl:8080"
             )
               .AllowAnyHeader()
               .AllowAnyMethod()
