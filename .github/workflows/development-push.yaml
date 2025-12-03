@@ -1,0 +1,127 @@
+# ===========================================
+# GitHub Actions Workflow: CI Build & Deploy
+# Environment: Development
+# Description:
+#   - Restores, builds, and tests the .NET backend
+#   - Publishes and deploys to Azure Web App
+#   - Runs on every push to 'development'
+# ===========================================
+
+name: CI Build & Deploy (.NET Backend - Development)
+
+# -------------------------------------------
+# Trigger: Run workflow on push to 'development' branch
+# -------------------------------------------
+on:
+  push:
+    branches:
+      - development
+  workflow_dispatch:
+
+# -------------------------------------------
+# Jobs Definition
+# -------------------------------------------
+jobs:
+  # =========================================
+  # Job: Build & Test Stage
+  # Purpose: Restore dependencies, build, and test .NET project
+  # =========================================
+  build_and_test:
+    name: Build & Test (.NET)
+    runs-on: windows-latest
+    env:
+      DOTNET_VERSION: '8.0.x'
+      BUILD_CONFIGURATION: 'Release'
+
+    steps:
+      # Step 1: Checkout source code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Setup .NET environment
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Step 3: Cache NuGet packages for faster builds
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}
+
+      # Step 4: Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # Step 5: Build all projects in Release mode
+      - name: Build solution
+        run: dotnet build --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+      # Step 6: Run unit tests and collect results
+      - name: Run unit tests
+        run: dotnet test --configuration ${{ env.BUILD_CONFIGURATION }} --no-build --logger trx
+        continue-on-error: true
+
+      # Step 7: Publish test results (if available)
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/*.trx'
+
+      # Step 8: Publish compiled app (self-contained package)
+      - name: Publish application
+        run: dotnet publish -c ${{ env.BUILD_CONFIGURATION }} -o '${{ github.workspace }}/publish'
+
+      # Step 9: Upload build artifact for deploy stage
+      - name: Upload published artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-app
+          path: ${{ github.workspace }}/publish
+
+  # =========================================
+  # Job: Deploy Stage
+  # Purpose: Deploy published app to Azure Web App
+  # Depends on: build_and_test
+  # =========================================
+  deploy:
+    if: github.event_name == 'push'
+    name: Deploy to Azure Web App (.NET Backend)
+    needs: build_and_test
+    runs-on: windows-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      # Step 1: Download published artifact from build stage
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dotnet-app
+          path: .
+      
+      # Step 2: Login using service principal credentials
+      - name: Login to Azure using service principal
+        uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Step 3: Deploy the backend to Azure App Service
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@657f0700ea5214d56a0400d8ac5e8023c963d25d
+        with:
+          app-name: 'anquilosaurios-development-backend'
+          slot-name: 'Production'
+          package: .
+          
+      # Step 4: Logout from Azure session
+      - name: Logout from Azure
+        run: az logout

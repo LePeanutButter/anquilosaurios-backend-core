@@ -1,25 +1,48 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36414.22 d17.14
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "aquilosaurios-backend-core", "aquilosaurios-backend-core.csproj", "{E40F683E-213E-47D4-9A94-F9AA7BA668CA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "anquilosaurios-backend-core", "anquilosaurios-backend-core\anquilosaurios-backend-core.csproj", "{BA795462-72EE-4458-9EA4-529ED7330BC6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "anquilosaurios-backend-core.Tests", "anquilosaurios-backend-core.Tests\anquilosaurios-backend-core.Tests.csproj", "{EDB924BD-CBF5-46D8-958E-353079AC007F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E40F683E-213E-47D4-9A94-F9AA7BA668CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E40F683E-213E-47D4-9A94-F9AA7BA668CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E40F683E-213E-47D4-9A94-F9AA7BA668CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E40F683E-213E-47D4-9A94-F9AA7BA668CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Debug|x64.Build.0 = Debug|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Debug|x86.Build.0 = Debug|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Release|x64.ActiveCfg = Release|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Release|x64.Build.0 = Release|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Release|x86.ActiveCfg = Release|Any CPU
+		{BA795462-72EE-4458-9EA4-529ED7330BC6}.Release|x86.Build.0 = Release|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Debug|x64.Build.0 = Debug|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Debug|x86.Build.0 = Debug|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Release|x64.ActiveCfg = Release|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Release|x64.Build.0 = Release|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Release|x86.ActiveCfg = Release|Any CPU
+		{EDB924BD-CBF5-46D8-958E-353079AC007F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {D2380428-F57C-4449-8021-53CC7B26D076}
 	EndGlobalSection
 EndGlobal

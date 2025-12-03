@@ -1,24 +1,21 @@
 # ===========================================
 # GitHub Actions Workflow: CI Build & Deploy
-# Environment: Production
+# Environment: Development
 # Description:
-#   - Restores, builds, and tests the .NET backend
-#   - Publishes and deploys to Azure Web App
-#   - Runs on every push or pull request to 'main'
+# - **Continuous Integration (CI)**: Executes **dynamic analysis** (unit tests with code coverage via **Coverlet**), runs **static analysis** via **SonarCloud**, and performs a **Release build** and **unit test run**.
+# - **Continuous Deployment (CD)**: Publishes the compiled .NET backend as an artifact, ready for an optional, subsequent deployment job (deployment job is not shown in this file).
+# - **Trigger**: Runs automatically on every **pull request** targeting the 'development' branch, and can be run **manually** via `workflow_dispatch`.
 # ===========================================
 
-name: CI Build & Deploy (.NET Backend - Production)
+name: CI Build & Deploy (.NET Backend - Development)
 
 # -------------------------------------------
-# Trigger: Run workflow on push or PR to 'main' branch
+# Trigger: Run workflow on PR to 'development' branch
 # -------------------------------------------
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
-      - main
+      - development
   workflow_dispatch:
 
 # -------------------------------------------
@@ -114,7 +111,7 @@ jobs:
   # Purpose: Restore dependencies and build .NET project
   # =========================================
   build:
-    name: Build & Test (.NET)
+    name: Build (.NET)
     needs: sonar_scan
     runs-on: windows-latest
     env:
@@ -158,115 +155,3 @@ jobs:
         with:
           name: dotnet-app
           path: ${{ github.workspace }}/publish
-
-  # =========================================
-  # Job: Build Docker Image
-  # Purpose: Build Docker image from backend build artifacts
-  # =========================================
-  docker_build:
-    name: Build Docker Image using CI build
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      # Step 1: Checkout the repository to access Dockerfile and context
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Step 2: Download the backend build artifacts from the previous build job
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dotnet-app
-          path: build
-
-      # Step 3: Build Docker image using the downloaded build artifacts
-      - name: Build Docker Image
-        run: docker build -t anquilo-backend:latest .
-
-      # Step 4: Save the Docker image as a tar archive for artifact storage
-      - name: Save Docker Image
-        run: docker save anquilo-backend -o backend.tar
-
-      # Step 5: Upload the saved Docker image tarball as a workflow artifact
-      - name: Upload Docker image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-image
-          path: backend.tar
-
-  # =========================================
-  # Job: Security Scan (Trivy)
-  # Purpose: Scan Docker image for vulnerabilities
-  # =========================================
-  trivy_scan:
-    name: Run Trivy Security Scan
-    needs: docker_build
-    runs-on: ubuntu-latest
-    steps:
-      # Step 1: Download the Docker image artifact created in the previous job
-      - name: Download docker image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-image
-          path: .
-
-      # Step 2: Load the Docker image from the tar archive into Docker
-      - name: Load Docker image
-        run: docker load -i backend.tar
-
-      # Step 3: Install Trivy security scanner on the runner
-      - name: Install Trivy
-        run: |
-          sudo apt-get update
-          sudo apt-get install wget -y
-          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.2_Linux-64bit.deb
-          sudo dpkg -i trivy_0.50.2_Linux-64bit.deb
-
-      # Step 4: Scan the Docker image for HIGH and CRITICAL vulnerabilities; fail job if found
-      - name: Run Trivy Scan
-        run: trivy image --exit-code 1 --severity HIGH,CRITICAL anquilo-backend:latest
-
-  # =========================================
-  # Job: Push Docker Image to ACR
-  # Purpose: Deploy Docker image to Azure Container Registry
-  # =========================================
-  push_to_acr:
-    if: github.event_name == 'push'
-    name: Push Docker Image to ACR
-    needs: trivy_scan
-    runs-on: ubuntu-latest
-    env:
-      ACR_NAME: ${{ secrets.ACR_NAME }}
-    steps:
-      # Step 1: Checkout repository
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Step 2: Download Docker image artifact from previous job
-      - uses: actions/download-artifact@v4
-        with:
-          name: docker-image
-          path: .
-
-      # Step 3: Load the Docker image from the tar archive
-      - name: Load Docker image
-        run: docker load -i backend.tar
-
-      # Step 4: Log in to Azure using a service principal from secrets
-      - name: Azure Login
-        uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      # Step 5: Log in to Azure Container Registry (ACR)
-      - name: ACR Login
-        run: az acr login --name $ACR_NAME
-
-      # Step 6: Tag Docker image for pushing to ACR
-      - name: Tag Image for ACR
-        run: |
-          docker tag anquilo-backend:latest $ACR_NAME.azurecr.io/dotnet-backend:latest
-
-      # Step 7: Push the Docker image to ACR
-      - name: Push to ACR
-        run: docker push $ACR_NAME.azurecr.io/dotnet-backend:latest
