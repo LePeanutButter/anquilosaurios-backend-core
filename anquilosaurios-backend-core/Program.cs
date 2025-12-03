@@ -115,6 +115,6 @@ app.UseCors("AllowFrontendApps");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-await app.RunAsync();
+app.Run();
 
 public partial class Program { }
