@@ -216,7 +216,7 @@ jobs:
 
       # Step 3: Use the official Trivy Action to install and scan
       - name: Run Trivy Scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8
         with:
           image-ref: anquilo-backend:latest
           format: 'table' 
