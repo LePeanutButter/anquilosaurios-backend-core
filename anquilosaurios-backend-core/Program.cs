@@ -72,8 +72,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontendApps", policy =>
     {
         policy.WithOrigins(
-            "http://svelte_frontend:3000",
-            "http://unity_webgl:8080"
+            "http://20.168.245.216/app",
+            "http://20.168.245.216/play"
             )
               .AllowAnyHeader()
               .AllowAnyMethod()
@@ -110,7 +110,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapGet("/health", () => Results.Ok("Healthy"));
+app.MapGet("/api/health", () => Results.Ok("Healthy"));
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontendApps");
 app.UseAuthentication();
