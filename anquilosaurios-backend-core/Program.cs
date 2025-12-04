@@ -72,7 +72,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontendApps", policy =>
     {
         policy.WithOrigins(
-            "http://svelte_frontend:80",
+            "http://svelte_frontend:3000",
             "http://unity_webgl:8080"
             )
               .AllowAnyHeader()
