@@ -19,7 +19,7 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// POST api/auth/register
+    /// POST a api/auth/register
     /// </summary>
     [HttpPost("register")]
     [AllowAnonymous]
@@ -28,16 +28,16 @@ public class AuthController : ControllerBase
         try
         {
             await _userService.CreateUserAsync(dto);
-            
+
             var loginDto = new LoginDTO
             {
                 Identifier = dto.Email,
-                RawPassword = dto.RawPassword 
+                RawPassword = dto.RawPassword
             };
             var (user, token) = await _authService.AuthenticateAsync(loginDto);
-            
+
             return Ok(new ControllerResponse<object>(
-                new { user, token }, 
+                new { user, token },
                 "Usuario registrado exitosamente"
             ));
         }
@@ -55,12 +55,12 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ControllerResponse<object>>> Login([FromBody] LoginDTO dto)
     {
         var (user, token) = await _authService.AuthenticateAsync(dto);
-        
+
         if (user == null || token == null)
             return Unauthorized(new ControllerResponse<object>("Credenciales inválidas"));
 
         return Ok(new ControllerResponse<object>(
-            new { user, token }, 
+            new { user, token },
             "Login exitoso"
         ));
     }
@@ -73,7 +73,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ControllerResponse<string>>> Logout()
     {
         var userIdClaim = User.FindFirst("userId")?.Value;
-        
+
         if (Guid.TryParse(userIdClaim, out var userId))
             await _authService.SignOutAsync(userId);
 

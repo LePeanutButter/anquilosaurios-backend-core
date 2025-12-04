@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace aquilosaurios_backend_core.API.Controllers;
 
 [ApiController]
-[Route("users")]
+[Route("api/user")]
 public class UserController : ControllerBase
 {
     private readonly IUserService userService;
@@ -17,12 +17,12 @@ public class UserController : ControllerBase
         this.authService = authService;
     }
 
-    // POST users/authenticate
+    // POST api/user/authenticate
     [HttpPost("authenticate")]
     public async Task<ActionResult<ControllerResponse<object>>> Authenticate([FromBody] LoginDTO dto)
     {
         var (user, token) = await authService.AuthenticateAsync(dto);
-        
+
         if (user == null || token == null)
             return Unauthorized(new ControllerResponse<object>("Invalid credentials"));
 
@@ -30,7 +30,7 @@ public class UserController : ControllerBase
         return Ok(new ControllerResponse<object>(result, "User authenticated"));
     }
 
-    // POST users/signOut?id=xxx
+    // POST api/user/signOut?id=xxx
     [HttpPost("signOut")]
     public async Task<ActionResult<ControllerResponse<string>>> SignOut([FromQuery] Guid id)
     {
@@ -94,7 +94,7 @@ public class UserController : ControllerBase
         return Ok(new ControllerResponse<string>("Admin role updated"));
     }
 
-    [HttpPut("verifyEmail/{userId}")]
+    [HttpPut("verification/{userId}")]
     public async Task<ActionResult<ControllerResponse<string>>> VerifyEmail(Guid userId)
     {
         await userService.VerifyEmailAsync(userId);

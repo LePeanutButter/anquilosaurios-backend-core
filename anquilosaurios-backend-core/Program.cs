@@ -110,6 +110,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapGet("/health", () => Results.Ok("Healthy"));
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontendApps");
 app.UseAuthentication();
