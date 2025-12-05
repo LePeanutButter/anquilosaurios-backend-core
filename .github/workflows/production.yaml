@@ -50,7 +50,7 @@ jobs:
       uses: actions/setup-java@v3
       with:
           java-version: '17'
-          distribution: 'adoptopenjdk'
+          distribution: 'temurin'
 
     # Step 4: Run SonarCloud scan
     - name: SonarScanner for .NET 8 with pull request decoration support
