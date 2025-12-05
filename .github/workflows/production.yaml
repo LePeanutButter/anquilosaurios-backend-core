@@ -54,13 +54,14 @@ jobs:
 
     # Step 4: Run SonarCloud scan
     - name: SonarScanner for .NET 8 with pull request decoration support
-      uses: highbyte/sonarscan-dotnet@7d3d76a86771844ab28f16ce63a1adccdb675181
+      uses: highbyte/sonarscan-dotnet@v2.3.4
       with:
         sonarProjectKey: LePeanutButter_anquilosaurios-backend-core
         sonarProjectName:  anquilosaurios-backend-core
         sonarOrganization: lepeanutbutter
-        dotnetTestArguments: --logger trx --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-        sonarBeginArguments: /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" -d:sonar.cs.vstest.reportsPaths="**/TestResults/*.trx" -d:sonar.coverage.exclusions=""
+        dotnetBuildArguments: ./anquilosaurios-backend-core
+        dotnetTestArguments: ./anquilosaurios-backend-core.Tests --logger trx --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        sonarBeginArguments: /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" -d:sonar.cs.vstest.reportsPaths="**/TestResults/*.trx"
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
